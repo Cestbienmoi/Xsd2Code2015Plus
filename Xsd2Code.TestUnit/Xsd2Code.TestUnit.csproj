@@ -78,6 +78,9 @@
     <Compile Include="xsd\ArrayOfArray.Designer.cs" />
     <Compile Include="xsd\CircularClassReference.Designer.cs" />
     <Compile Include="xsd\dvd.designer.cs" />
+    <Content Include="xsd\EntityObject.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="xsd\Gender.cs">
       <DependentUpon>Gender.xsd</DependentUpon>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

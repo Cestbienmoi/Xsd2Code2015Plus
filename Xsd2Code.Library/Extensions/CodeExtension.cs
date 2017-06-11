@@ -283,6 +283,8 @@ namespace Xsd2Code.Library.Extensions
             cloneMethod.Statements.Add(statement);
             return cloneMethod;
         }
+
+        protected CodeConstructor ctor;
         /// <summary>
         /// Processes the class.
         /// </summary>
@@ -294,7 +296,7 @@ namespace Xsd2Code.Library.Extensions
             var addedToConstructor = false;
             var newCTor = false;
 
-            var ctor = this.GetConstructor(type, ref newCTor);
+            ctor = this.GetConstructor(type, ref newCTor);
             ShouldSerializeFields.Clear();
             MemberFieldsListFields.Clear();
             PropertiesListFields.Clear();
@@ -1646,17 +1648,16 @@ namespace Xsd2Code.Library.Extensions
         /// <param name="ns">CodeNamespace XSD</param>
         /// <param name="addedToConstructor">Indicates if create a new constructor</param>
         protected virtual void ProcessFields(
-                                            CodeTypeMember member,
+                                            CodeMemberField field,
                                             CodeMemberMethod ctor,
                                             CodeNamespace ns,
                                             ref bool addedToConstructor)
         {
-            var field = (CodeMemberField)member;
 
             // ---------------------------------------------
             // [EditorBrowsable(EditorBrowsableState.Never)]
             // ---------------------------------------------
-            if (member.Attributes == MemberAttributes.Private)
+            if (field.Attributes == MemberAttributes.Private)
             {
                 if (GeneratorContext.GeneratorParams.Miscellaneous.HidePrivateFieldInIde)
                 {
@@ -1830,7 +1831,7 @@ namespace Xsd2Code.Library.Extensions
         /// <param name="member">Type members include fields, methods, properties, constructors and nested types</param>
         /// <param name="xmlElement">Represent the root element in schema</param>
         /// <param name="schema">XML Schema</param>
-        protected virtual void ProcessProperty(CodeTypeDeclaration type, CodeNamespace ns, CodeTypeMember member, XmlSchemaElement xmlElement, XmlSchema schema)
+        protected virtual void ProcessProperty(CodeTypeDeclaration type, CodeNamespace ns, CodeMemberProperty prop, XmlSchemaElement xmlElement, XmlSchema schema)
         {
             if (GeneratorContext.GeneratorParams.Miscellaneous.EnableSummaryComment)
             {
@@ -1846,9 +1847,9 @@ namespace Xsd2Code.Library.Extensions
                             var xmlAttrib = attribute as XmlSchemaAttribute;
                             if (xmlAttrib != null)
                             {
-                                if (member.Name.Equals(xmlAttrib.QualifiedName.Name))
+                                if (prop.Name.Equals(xmlAttrib.QualifiedName.Name))
                                 {
-                                    this.CreateCommentFromAnnotation(xmlAttrib.Annotation, member.Comments);
+                                    this.CreateCommentFromAnnotation(xmlAttrib.Annotation, prop.Comments);
                                     foundInAttributes = true;
                                 }
                             }
@@ -1865,8 +1866,8 @@ namespace Xsd2Code.Library.Extensions
                                     var currentItem = item as XmlSchemaElement;
                                     if (currentItem != null)
                                     {
-                                        if (member.Name.Equals(currentItem.QualifiedName.Name))
-                                            this.CreateCommentFromAnnotation(currentItem.Annotation, member.Comments);
+                                        if (prop.Name.Equals(currentItem.QualifiedName.Name))
+                                            this.CreateCommentFromAnnotation(currentItem.Annotation, prop.Comments);
                                     }
                                 }
                             }
@@ -1874,8 +1875,6 @@ namespace Xsd2Code.Library.Extensions
                     }
                 }
             }
-
-            var prop = (CodeMemberProperty)member;
 
             if (prop.Type.ArrayElementType != null)
             {
@@ -1972,7 +1971,7 @@ namespace Xsd2Code.Library.Extensions
                                         new CodeStatement[] { condStatmentCondEquals },
                                         CodeDomHelper.CodeStmtColToArray(setValueCondition));
 
-                            var property = member as CodeMemberProperty;
+                            var property = prop;
                             if (property != null)
                             {
                                 if (property.Type.BaseType != new CodeTypeReference(typeof(long)).BaseType &&

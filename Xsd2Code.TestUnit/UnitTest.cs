@@ -274,11 +274,9 @@ namespace Xsd2Code.TestUnit
                 generatorParams.TrackingChanges.GenerateTrackingClasses = false;
                 generatorParams.Serialization.EnableEncoding = false;
                 generatorParams.Serialization.DefaultEncoder = DefaultEncoder.UTF8;
+                //generatorParams.PropertyParams.AutomaticProperties = true;
 
-                var xsdGen = new GeneratorFacade(generatorParams);
-                var result = xsdGen.Generate();
-
-                Assert.IsTrue(result.Success, result.Messages.ToString());
+                GenerateAndCompile(generatorParams);
 
                 // Create new dvd collection and save it to file
                 var dvd = new DvdCollection();
@@ -320,9 +318,6 @@ namespace Xsd2Code.TestUnit
                         }
                     }
                 }
-
-                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
-                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
 
             }
         }
@@ -416,12 +411,7 @@ namespace Xsd2Code.TestUnit
                 generatorParams.GenerateDataContracts = true;
                 generatorParams.Serialization.GenerateXmlAttributes = true;
                 generatorParams.OutputFilePath = GetOutputFilePath(inputFilePath);
-
-                var xsdGen = new GeneratorFacade(generatorParams);
-
-                var result = xsdGen.Generate();
-
-                Assert.IsTrue(result.Success, result.Messages.ToString());
+                GenerateAndCompile(generatorParams);
 
                 var genderRoot = new Root
                 {
@@ -433,10 +423,17 @@ namespace Xsd2Code.TestUnit
                 Exception ex;
                 genderRoot.SaveToFile(GetOutputFullFileName("gender.xml"), out ex);
                 if (ex != null) throw ex;
-
-                var canCompile = CompileCSFile(generatorParams.OutputFilePath);
-                Assert.IsTrue(canCompile.Success, canCompile.Messages.ToString());
             }
+        }
+
+        private void GenerateAndCompile(GeneratorParams generatorParams, params string[] additionalFiles)
+        {
+            var xsdGen = new GeneratorFacade(generatorParams);
+            var result = xsdGen.Generate();
+            Assert.IsTrue(result.Success, result.Messages.ToString());
+
+            var canCompile = CompileCSFile(generatorParams.OutputFilePath, additionalFiles);
+            Assert.IsTrue(canCompile.Success, canCompile.Messages.ToString());
         }
 
         [TestMethod]
@@ -661,14 +658,7 @@ namespace Xsd2Code.TestUnit
                 generatorParams.Miscellaneous.EnableSummaryComment = true;
                 generatorParams.GenericBaseClass.Enabled = true;
                 generatorParams.GenericBaseClass.BaseClassName = "EntityObject";
-
-                var xsdGen = new GeneratorFacade(generatorParams);
-                var result = xsdGen.Generate();
-
-                Assert.IsTrue(result.Success, result.Messages.ToString());
-
-                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
-                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+                GenerateAndCompile(generatorParams, GetInputFullFileName("EntityObject.cs"));
             }
         }
 
@@ -810,7 +800,7 @@ namespace Xsd2Code.TestUnit
         /// </summary>
         /// <param name="filePath">CS file path</param>
         /// <returns></returns>
-        static private Result<string> CompileCSFile(string filePath)
+        static private Result<string> CompileCSFile(string filePath, params string[] additionalFiles)
         {
             var result = new Result<string>(null, true);
             var file = new FileInfo(filePath);
@@ -830,9 +820,11 @@ namespace Xsd2Code.TestUnit
                     args.Append(" /target:module /nologo /debug");
                     args.Append(" /out:\"" + outputPath + "\"");
                     args.Append(" \"" + filePath + "\"");
+                    foreach(var additionalFile in additionalFiles)
+                        args.Append(" \"").Append(additionalFile).Append("\"");
 
                     var compilerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),
-                                                    @"..\Microsoft.NET\Framework\v2.0.50727\csc.exe");
+                                                    @"..\Microsoft.NET\Framework\v4.0.30319\csc.exe"); /*v2.0.50727*/
 
                     var compilerFile = new FileInfo(compilerPath);
 
@@ -844,7 +836,10 @@ namespace Xsd2Code.TestUnit
                         FileName = compilerFile.FullName,
                         Arguments = args.ToString(),
                         CreateNoWindow = true,
-                        WindowStyle = ProcessWindowStyle.Minimized
+                        WindowStyle = ProcessWindowStyle.Minimized,
+                        UseShellExecute = false,
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true
                     };
 
                     using (var process = new Process { StartInfo = info })
@@ -855,18 +850,22 @@ namespace Xsd2Code.TestUnit
                                                              result.Messages.Add(MessageType.Error, "Error data received", e.Data);
                                                          };
 
-                        process.Exited += (s, e) => { result.Success = process.ExitCode == 1 && File.Exists(outputPath); };
-
                         process.OutputDataReceived += (s, e) => result.Messages.Add(MessageType.Debug, "Output data received", e.Data);
 
                         if (!process.Start())
                             throw new ApplicationException("Unablle to start process");
+                        process.BeginErrorReadLine();
+                        process.BeginOutputReadLine();
 
                         var exited = process.WaitForExit((int) TimeSpan.FromSeconds(15).TotalMilliseconds);
                         if (!exited)
                         {
                             result.Success = false;
                             result.Messages.Add(MessageType.Error, "Timeout", "Compile timeout occurred {0}", DateTime.Now - process.StartTime);
+                        }
+                        else
+                        {
+                            result.Success = process.ExitCode == 0 && File.Exists(outputPath);
                         }
                     }
                 }

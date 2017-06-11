@@ -35,12 +35,12 @@ namespace Xsd2Code.Library.Extensions
         /// <summary>
         /// List the fields to be deleted
         /// </summary>
-        private readonly List<CodeMemberField> fieldListToRemoveField = new List<CodeMemberField>();
+        //private readonly List<CodeMemberField> fieldListToRemoveField = new List<CodeMemberField>();
 
         /// <summary>
         /// List fields that require an initialization in the constructor
         /// </summary>
-        private readonly List<string> fieldWithAssignementInCtorListField = new List<string>();
+        //private readonly List<string> fieldWithAssignementInCtorListField = new List<string>();
 
         #endregion
 
@@ -55,11 +55,11 @@ namespace Xsd2Code.Library.Extensions
         protected override void ProcessClass(CodeNamespace codeNamespace, XmlSchema schema, CodeTypeDeclaration type)
         {
             this.autoPropertyListField.Clear();
-            this.fieldListToRemoveField.Clear();
-            this.fieldWithAssignementInCtorListField.Clear();
+            //this.fieldListToRemoveField.Clear();
+            //this.fieldWithAssignementInCtorListField.Clear();
 
             // looks for properties that can not become automatic property
-            CodeConstructor ctor = null;
+/*            CodeConstructor ctor = null;
             foreach (CodeTypeMember member in type.Members)
             {
                 if (member is CodeConstructor)
@@ -78,7 +78,7 @@ namespace Xsd2Code.Library.Extensions
                         this.fieldWithAssignementInCtorListField.Add(code.FieldName);
                     }
                 }
-            }
+            }*/
 
             base.ProcessClass(codeNamespace, schema, type);
 
@@ -147,15 +147,14 @@ namespace Xsd2Code.Library.Extensions
         /// </summary>
         /// <param name="type">Represents a type declaration for a class, structure, interface, or enumeration</param>
         /// <param name="ns">The ns.</param>
-        /// <param name="member">Type members include fields, methods, properties, constructors and nested types</param>
+        /// <param name="prop">Type members include fields, methods, properties, constructors and nested types</param>
         /// <param name="xmlElement">Represent the root element in schema</param>
         /// <param name="schema">XML Schema</param>
-        protected override void ProcessProperty(CodeTypeDeclaration type, CodeNamespace ns, CodeTypeMember member, XmlSchemaElement xmlElement, XmlSchema schema)
+        protected override void ProcessProperty(CodeTypeDeclaration type, CodeNamespace ns, CodeMemberProperty prop, XmlSchemaElement xmlElement, XmlSchema schema)
         {
             // Get now if property is array before base.ProcessProperty call.
-            var prop = (CodeMemberProperty)member;
 
-            base.ProcessProperty(type, ns, member, xmlElement, schema);
+            base.ProcessProperty(type, ns, prop, xmlElement, schema);
 
             int i = 0;
             // Generate automatic properties.
@@ -164,24 +163,20 @@ namespace Xsd2Code.Library.Extensions
                 if (GeneratorContext.GeneratorParams.PropertyParams.AutomaticProperties)
                 {
                     bool excludeType = false;
-                        // Exclude collection type
-                        if (CollectionTypesFields.IndexOf(prop.Name) == -1)
+                    // Exclude collection type
+                    if (CollectionTypesFields.IndexOf(prop.Name) == -1)
+                    {
+                        // Get private fieldName
+                        var fieldName = prop.GetFieldNameFromProperty();
+                        if (fieldName != null)
                         {
-                            // Get private fieldName
-                            var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
-                            if (propReturnStatment != null)
+                            // Check if private field don't need initialisation in ctor (defaut value).
+                            if (!ctor.CheckFieldInCtor(fieldName))
                             {
-                                var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
-                                if (field != null)
-                                {
-                                    // Check if private field don't need initialisation in ctor (defaut value).
-                                    if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.FieldName) == -1)
-                                    {
-                                        this.autoPropertyListField.Add(member as CodeMemberProperty);
-                                    }
-                                }
+                                this.autoPropertyListField.Add(prop);
                             }
                         }
+                    }
                 }
             }
         }
@@ -193,37 +188,36 @@ namespace Xsd2Code.Library.Extensions
         /// <param name="ctor">CodeMemberMethod constructor</param>
         /// <param name="ns">CodeNamespace XSD</param>
         /// <param name="addedToConstructor">Indicates if create a new constructor</param>
-        protected override void ProcessFields(CodeTypeMember member, CodeMemberMethod ctor, CodeNamespace ns, ref bool addedToConstructor)
+        protected override void ProcessFields(CodeMemberField field, CodeMemberMethod ctor, CodeNamespace ns, ref bool addedToConstructor)
         {
             // Get now if filed is array before base.ProcessProperty call.
-            var field = (CodeMemberField)member;
             bool isArray = field.Type.ArrayElementType != null;
 
-            base.ProcessFields(member, ctor, ns, ref addedToConstructor);
+            base.ProcessFields(field, ctor, ns, ref addedToConstructor);
 
             // Generate automatic properties.
-            if (GeneratorContext.GeneratorParams.Language == GenerationLanguage.CSharp)
-            {
-                if (GeneratorContext.GeneratorParams.PropertyParams.AutomaticProperties)
-                {
-                    if (!isArray)
-                    {
-                        bool finded;
-                        if (!this.IsComplexType(field.Type, ns, out finded))
-                        {
-                            if (finded)
-                            {
-                                // If this field is not assigned in ctor, add it in remove list.
-                                // with automatic property, don't need to keep private field.
-                                if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.Name) == -1)
-                                {
-                                    this.fieldListToRemoveField.Add(field);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            /*   if (GeneratorContext.GeneratorParams.Language == GenerationLanguage.CSharp)
+               {
+                   if (GeneratorContext.GeneratorParams.PropertyParams.AutomaticProperties)
+                   {
+                       if (!isArray)
+                       {
+                           bool finded;
+                           if (!this.IsComplexType(field.Type, ns, out finded))
+                           {
+                               if (finded)
+                               {
+                                   // If this field is not assigned in ctor, add it in remove list.
+                                   // with automatic property, don't need to keep private field.
+                                   if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.Name) == -1)
+                                   {
+                                       this.fieldListToRemoveField.Add(field);
+                                   }
+                               }
+                           }
+                       }
+                   }
+               }*/
         }
 
         #endregion
@@ -328,18 +322,21 @@ namespace Xsd2Code.Library.Extensions
 
                             type.Members.Add(cm);
                             type.Members.Remove(item);
+                            var field = type.GetField(item.GetFieldNameFromProperty());
+                            if (field != null)
+                                type.Members.Remove(field);
                         }
                     }
 
                     // Now remove all private fileds
-                    foreach (var item in this.fieldListToRemoveField)
+               /*     foreach (var item in this.fieldListToRemoveField)
                     {
                         if (item.Name == "mailClassField" && type.Name == "uspsSummaryType")
                         {
                             ;
                         }
                         type.Members.Remove(item);
-                    }
+                    }*/
                 }
             }
         }
