@@ -80,10 +80,12 @@
     <Compile Include="xsd\dvd.designer.cs" />
     <Compile Include="xsd\Gender.cs">
       <DependentUpon>Gender.xsd</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="xsd\hexBinary.designer.cs" />
     <Compile Include="xsd\Hierarchical.cs">
       <DependentUpon>Hierarchical.xsd</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="xsd\LazyLoading.designer.cs" />
     <Compile Include="xsd\mailxml_base.designer.cs" />
@@ -101,49 +103,77 @@
     <None Include="App.config" />
     <Content Include="xsd\ArrayOfArray.xsd">
       <Generator>xsd2CodeCustomTools</Generator>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="xsd\ChoiceSequence.xsd">
       <LastGenOutput>ChoiceSequence1.Designer.cs</LastGenOutput>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="xsd\CircularClassReference.xsd" />
+    <Content Include="xsd\CircularClassReference.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="xsd\dvd.xsd">
       <SubType>
       </SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="xsd\Actor.xsd" />
-    <Content Include="xsd\Circular.xsd" />
+    <Content Include="xsd\Actor.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\Circular.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="xsd\dvd.xsx">
       <DependentUpon>dvd.xsd</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Content Include="xsd\Gender.xsd" />
-    <Content Include="xsd\Hierarchical.xsd" />
-    <Content Include="xsd\ReproSchema.xsd" />
-    <Content Include="xsd\StackOverFlow.xsd" />
-    <Content Include="xsd\TestAnnotations.xsd" />
-    <None Include="xsd\hexBinary.xsd">
+    <Content Include="xsd\Gender.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\Hierarchical.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\ReproSchema.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\StackOverFlow.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\TestAnnotations.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\hexBinary.xsd">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="xsd\LazyLoading.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\LazyLoading.xsd">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="xsd\mailxml_base.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\mailxml_base.xsd">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="xsd\mailxml_base_120108.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\mailxml_base_120108.xsd">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="xsd\PersonTypeAnnotation.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\PersonTypeAnnotation.xsd">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="xsd\PropertyNameSpecified.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\PropertyNameSpecified.xsd">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="xsd\TestOptionalElement.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\TestOptionalElement.xsd">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="xsd\XMLSchema.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xsd\XMLSchema.xsd">
       <SubType>Designer</SubType>
-    </None>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Xsd2Code.Library\Xsd2Code.Library.csproj">

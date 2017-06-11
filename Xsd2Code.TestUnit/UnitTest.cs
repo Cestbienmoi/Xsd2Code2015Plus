@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Xsd2Code.Library;
 using Xsd2Code.Library.Helpers;
 using Xsd2Code.TestUnit.Properties;
+using System.Reflection;
 
 namespace Xsd2Code.TestUnit
 {
@@ -26,13 +27,39 @@ namespace Xsd2Code.TestUnit
     {
         private readonly object testLock = new object();
         static readonly object fileLock = new object();
+        private static string tempDirectory;
 
-        /// <summary>
-        /// Output folder: TestResults folder relative to the solution root folder
-        /// </summary>
-        private static string OutputFolder
+        [ClassInitialize]
+        public static void ClassInit(TestContext context)
         {
-            get { return @"c:\temp\"; } // Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\"; }
+            tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tempDirectory);
+        }
+        [ClassCleanup]
+        public static void ClassCleanup()
+        {
+            foreach (var file in Directory.GetFiles(tempDirectory))
+            {
+                File.Delete(file);
+            }
+            Directory.Delete(tempDirectory, true);
+        }
+
+        private static string InputDirectory
+        {
+            get
+            {
+                return System.IO.Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "xsd");
+            }
+        }
+
+        private static string GetInputFullFileName(string localFileName)
+        {
+            return System.IO.Path.Combine(InputDirectory, localFileName);
+        }
+        private static string GetOutputFullFileName(string localFileName)
+        {
+            return System.IO.Path.Combine(tempDirectory, localFileName);
         }
 
         /// <summary>
@@ -94,12 +121,12 @@ namespace Xsd2Code.TestUnit
                 // Copy resource file to the run-time directory
                 string inputFilePath = GetInputFilePath("CircularClassReference.xsd", Resources.CircularClassReference);
                 var generatorParams = new GeneratorParams
-                                          {
-                                              InputFilePath = inputFilePath,
-                                              TargetFramework = TargetFramework.Net20,
-                                              OutputFilePath = GetOutputFilePath(inputFilePath)
+                {
+                    InputFilePath = inputFilePath,
+                    TargetFramework = TargetFramework.Net20,
+                    OutputFilePath = GetOutputFilePath(inputFilePath)
 
-                                          };
+                };
                 generatorParams.PropertyParams.AutomaticProperties = true;
                 generatorParams.Serialization.Enabled = false;
                 generatorParams.GenericBaseClass.Enabled = false;
@@ -140,15 +167,15 @@ namespace Xsd2Code.TestUnit
                 var inputFilePath = GetInputFilePath("ArrayOfArray.xsd", Resources.ArrayOfArray);
 
                 var generatorParams = new GeneratorParams
-                                          {
-                                              GenerateCloneMethod = true,
-                                              InputFilePath = inputFilePath,
-                                              NameSpace = "MyNameSpace",
-                                              CollectionObjectType = CollectionType.Array,
-                                              EnableDataBinding = true,
-                                              Language = GenerationLanguage.CSharp,
-                                              OutputFilePath = Path.ChangeExtension(inputFilePath, ".TestGenerated.cs")
-                                          };
+                {
+                    GenerateCloneMethod = true,
+                    InputFilePath = inputFilePath,
+                    NameSpace = "MyNameSpace",
+                    CollectionObjectType = CollectionType.Array,
+                    EnableDataBinding = true,
+                    Language = GenerationLanguage.CSharp,
+                    OutputFilePath = Path.ChangeExtension(inputFilePath, ".TestGenerated.cs")
+                };
                 generatorParams.PropertyParams.AutomaticProperties = true;
                 generatorParams.Serialization.Enabled = true;
                 var xsdGen = new GeneratorFacade(generatorParams);
@@ -197,7 +224,7 @@ namespace Xsd2Code.TestUnit
                 Exception ex;
 
                 var serialized = e.Serialize();
-                e.SaveToFile(Path.Combine(OutputFolder, "ReproSampleFile.xml"), out ex);
+                e.SaveToFile(GetOutputFullFileName("ReproSampleFile.xml"), out ex);
                 if (ex != null) throw ex;
 
                 //try to deserialize
@@ -205,7 +232,7 @@ namespace Xsd2Code.TestUnit
                 //generate doc conformant to schema
 
                 ArrayOfMyElement toDeserialize;
-                if (!ArrayOfMyElement.LoadFromFile("ReproSampleFile.xml", out toDeserialize, out ex))
+                if (!ArrayOfMyElement.LoadFromFile(GetOutputFullFileName("ReproSampleFile.xml"), out toDeserialize, out ex))
                 {
                     Console.WriteLine("Unable to deserialize, will exit");
                     return;
@@ -260,11 +287,12 @@ namespace Xsd2Code.TestUnit
                 newitem.Actor.Add(new Actor { firstname = "JamÈs ‡&", nationality = "Us" });
                 dvd.Dvds.Add(newitem);
                 var originalXml = dvd.Serialize();
-                dvd.SaveToFile(@"c:\temp\dvd.xml");
+                var dataOutputFileName = GetOutputFullFileName("dvd.xml");
+                dvd.SaveToFile(dataOutputFileName);
 
                 // Load data fom file and serialize it again.                                                                                                                                                               
 
-                var loadedDvdCollection = DvdCollection.LoadFromFile(@"c:\temp\dvd.xml");
+                var loadedDvdCollection = DvdCollection.LoadFromFile(dataOutputFileName);
                 var finalXml = loadedDvdCollection.Serialize();
 
                 // Then comprate two xml string
@@ -272,57 +300,24 @@ namespace Xsd2Code.TestUnit
                 {
                     Assert.Fail("Xml value are not equals");
                 }
+
                 Exception exp;
-                DvdCollection deserialiseDvd;
-                dvd.SaveToFile(@"c:\temp\dvdASCII.xml", Encoding.ASCII);
-                if (!DvdCollection.LoadFromFile(@"c:\temp\dvdASCII.xml", Encoding.ASCII, out deserialiseDvd, out exp))
-                 {
-                    Assert.Fail("LoadFromFile failed on ASCII encoding ");
-                 }
-                else
+                foreach (var encoding in encodings)
                 {
-                    if (!deserialiseDvd.Dvds[0].Title.Equals("Matrix ???"))
-                   {
-                        Assert.Fail("LoadFromFile failed on ASCII encoding ");
-                    }
-                }
-
-                dvd.SaveToFile(@"c:\temp\dvdUTF8.xml", Encoding.UTF8);
-                if (!DvdCollection.LoadFromFile(@"c:\temp\dvdUTF8.xml", Encoding.UTF8, out deserialiseDvd, out exp))
-                {
-                    Assert.Fail("LoadFromFile failed on UTF8 encoding "); 
-                }
-                else
-                {
-                    if (!deserialiseDvd.Dvds[0].Title.Equals("Matrix È‡?"))
+                    DvdCollection deserialiseDvd;
+                    var dataEncodingOutputFileName = GetOutputFullFileName($"dvd{encoding.EncodingName}.xml");
+                    dvd.SaveToFile(dataEncodingOutputFileName, encoding);
+                    if (!DvdCollection.LoadFromFile(dataEncodingOutputFileName, encoding, out deserialiseDvd, out exp))
                     {
-                        Assert.Fail("LoadFromFile failed on UTF8 encoding ");
+                        Assert.Fail($"LoadFromFile failed on {encoding.EncodingName} encoding ");
                     }
-                }
-
-                dvd.SaveToFile(@"c:\temp\dvdUnicode.xml", Encoding.Unicode);
-                if (!DvdCollection.LoadFromFile(@"c:\temp\dvdUnicode.xml", Encoding.Unicode, out deserialiseDvd, out exp))
-                {
-                    Assert.Fail("LoadFromFile failed on Unicode encoding ");
-                }
-                else
-                {
-                    if (!deserialiseDvd.Dvds[0].Title.Equals("Matrix È‡?"))
+                    else
                     {
-                        Assert.Fail("LoadFromFile failed on Unicode encoding ");
-                    }
-                }
-
-                dvd.SaveToFile(@"c:\temp\dvdUTF32.xml", Encoding.UTF32);
-                if (!DvdCollection.LoadFromFile(@"c:\temp\dvdUTF32.xml", Encoding.UTF32, out deserialiseDvd, out exp))
-                {
-                    Assert.Fail("LoadFromFile failed on UTF32 encoding ");
-                }
-                else
-                {
-                    if (!deserialiseDvd.Dvds[0].Title.Equals("Matrix È‡?"))
-                    {
-                        Assert.Fail("LoadFromFile failed on UTF32 encoding ");
+                        string title = /*(encoding == Encoding.ASCII) ? "Matrix ???" : */ "Matrix È‡?";
+                        if (!deserialiseDvd.Dvds[0].Title.Equals(title))
+                        {
+                            Assert.Fail($"LoadFromFile failed on {encoding.EncodingName} encoding ");
+                        }
                     }
                 }
 
@@ -331,6 +326,8 @@ namespace Xsd2Code.TestUnit
 
             }
         }
+
+        private static Encoding[] encodings = new Encoding[] { Encoding.ASCII, Encoding.UTF8, Encoding.Unicode, Encoding.UTF32 };
 
 
         /// <summary>
@@ -427,14 +424,14 @@ namespace Xsd2Code.TestUnit
                 Assert.IsTrue(result.Success, result.Messages.ToString());
 
                 var genderRoot = new Root
-                                     {
-                                         GenderAttribute = ksgender.female,
-                                         GenderAttributeSpecified = true,
-                                         GenderElement = ksgender.female,
-                                         GenderIntAttribute = "toto"
-                                     };
+                {
+                    GenderAttribute = ksgender.female,
+                    GenderAttributeSpecified = true,
+                    GenderElement = ksgender.female,
+                    GenderIntAttribute = "toto"
+                };
                 Exception ex;
-                genderRoot.SaveToFile(Path.Combine(OutputFolder, "gender.xml"), out ex);
+                genderRoot.SaveToFile(GetOutputFullFileName("gender.xml"), out ex);
                 if (ex != null) throw ex;
 
                 var canCompile = CompileCSFile(generatorParams.OutputFilePath);
@@ -652,13 +649,13 @@ namespace Xsd2Code.TestUnit
 
                 string outputFilePath = Path.ChangeExtension(inputFilePath, ".baseClass.cs");
                 var generatorParams = new GeneratorParams
-                                          {
-                                              InputFilePath = inputFilePath,
-                                              TargetFramework = TargetFramework.Net30,
-                                              GenerateDataContracts = true,
-                                              EnableDataBinding = true,
-                                              OutputFilePath = outputFilePath
-                                          };
+                {
+                    InputFilePath = inputFilePath,
+                    TargetFramework = TargetFramework.Net30,
+                    GenerateDataContracts = true,
+                    EnableDataBinding = true,
+                    OutputFilePath = outputFilePath
+                };
 
                 generatorParams.PropertyParams.AutomaticProperties = false;
                 generatorParams.Miscellaneous.EnableSummaryComment = true;
@@ -770,28 +767,28 @@ namespace Xsd2Code.TestUnit
         {
             lock (fileLock)
             {
-                using (var sw = new StreamWriter(OutputFolder + resourceFileName, false))
+                using (var sw = new StreamWriter(GetInputFullFileName(resourceFileName), false))
                 {
                     sw.Write(fileContent);
                 }
 
-                return OutputFolder + resourceFileName;
+                return GetInputFullFileName(resourceFileName);
             }
         }
 
         private static GeneratorParams GetGeneratorParams(string inputFilePath)
         {
             var generatorParams = new GeneratorParams
-                       {
-                           InputFilePath = inputFilePath,
-                           NameSpace = CodeGenerationNamespace,
-                           TargetFramework = TargetFramework.Net20,
-                           CollectionObjectType = CollectionType.ObservableCollection,
-                           EnableDataBinding = true,
-                           GenerateDataContracts = true,
-                           GenerateCloneMethod = true,
-                           OutputFilePath = GetOutputFilePath(inputFilePath)
-                       };
+            {
+                InputFilePath = inputFilePath,
+                NameSpace = CodeGenerationNamespace,
+                TargetFramework = TargetFramework.Net20,
+                CollectionObjectType = CollectionType.ObservableCollection,
+                EnableDataBinding = true,
+                GenerateDataContracts = true,
+                GenerateCloneMethod = true,
+                OutputFilePath = GetOutputFilePath(inputFilePath)
+            };
             generatorParams.Miscellaneous.HidePrivateFieldInIde = true;
             generatorParams.Miscellaneous.DisableDebug = true;
             generatorParams.Serialization.Enabled = true;
@@ -842,13 +839,13 @@ namespace Xsd2Code.TestUnit
                     Debug.WriteLine(string.Format("Executing:\r\n{0} {1}\r\n", compilerFile.FullName, args));
 
                     var info = new ProcessStartInfo
-                                   {
-                                       ErrorDialog = false,
-                                       FileName = compilerFile.FullName,
-                                       Arguments = args.ToString(),
-                                       CreateNoWindow = true,
-                                       WindowStyle = ProcessWindowStyle.Minimized
-                                   };
+                    {
+                        ErrorDialog = false,
+                        FileName = compilerFile.FullName,
+                        Arguments = args.ToString(),
+                        CreateNoWindow = true,
+                        WindowStyle = ProcessWindowStyle.Minimized
+                    };
 
                     using (var process = new Process { StartInfo = info })
                     {
@@ -865,7 +862,7 @@ namespace Xsd2Code.TestUnit
                         if (!process.Start())
                             throw new ApplicationException("Unablle to start process");
 
-                        var exited = process.WaitForExit((int)TimeSpan.FromSeconds(15).TotalMilliseconds);
+                        var exited = process.WaitForExit((int) TimeSpan.FromSeconds(15).TotalMilliseconds);
                         if (!exited)
                         {
                             result.Success = false;
