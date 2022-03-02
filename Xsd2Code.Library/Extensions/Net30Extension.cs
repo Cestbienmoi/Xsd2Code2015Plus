@@ -156,13 +156,13 @@ namespace Xsd2Code.Library.Extensions
 
             base.ProcessProperty(type, ns, prop, xmlElement, schema);
 
-            int i = 0;
+            //int i = 0;
             // Generate automatic properties.
             if (GeneratorContext.GeneratorParams.Language == GenerationLanguage.CSharp)
             {
                 if (GeneratorContext.GeneratorParams.PropertyParams.AutomaticProperties)
                 {
-                    bool excludeType = false;
+                    //bool excludeType = false;
                     // Exclude collection type
                     if (CollectionTypesFields.IndexOf(prop.Name) == -1)
                     {

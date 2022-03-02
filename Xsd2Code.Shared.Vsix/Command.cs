@@ -66,6 +66,7 @@ namespace Xsd2Code.Vsix
 
         private void MenuItem_BeforeQueryStatus(object sender, EventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             // get the menu that fired the event
             var menuCommand = sender as OleMenuCommand;
             if (menuCommand != null)
@@ -95,6 +96,7 @@ namespace Xsd2Code.Vsix
         }
         public static bool IsSingleProjectItemSelection(out IVsHierarchy hierarchy, out uint itemid)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             hierarchy = null;
             itemid = VSConstants.VSITEMID_NIL;
             int hr = VSConstants.S_OK;
@@ -191,7 +193,10 @@ namespace Xsd2Code.Vsix
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             DTE dte = (DTE)ServiceProvider.GetService(typeof(DTE));
+            if (dte == null)
+                return;
 
             ProjectItem proitem = dte.SelectedItems.Item(1).ProjectItem;
             Project proj = proitem.ContainingProject;
@@ -317,6 +322,7 @@ namespace Xsd2Code.Vsix
         /// </returns>
         private bool FindInProject(ProjectItems projectItems, string filename, out ProjectItem item)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             item = null;
             if (projectItems == null)
                 return false;

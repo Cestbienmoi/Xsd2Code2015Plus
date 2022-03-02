@@ -38,19 +38,15 @@
             this.btnGenerate = new System.Windows.Forms.Button();
             this.linkToCodePlex = new System.Windows.Forms.LinkLabel();
             this.chkOpenAfterGenerate = new System.Windows.Forms.CheckBox();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.webBrowser = new System.Windows.Forms.WebBrowser();
             this.tabControl.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
-            this.tabPage2.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl
             // 
             this.tabControl.Controls.Add(this.tabPage1);
-            this.tabControl.Controls.Add(this.tabPage2);
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl.Location = new System.Drawing.Point(0, 0);
             this.tabControl.Name = "tabControl";
@@ -154,27 +150,6 @@
             this.chkOpenAfterGenerate.Text = "Open code after generation";
             this.chkOpenAfterGenerate.UseVisualStyleBackColor = true;
             // 
-            // tabPage2
-            // 
-            this.tabPage2.Controls.Add(this.webBrowser);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(565, 599);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Download update";
-            this.tabPage2.UseVisualStyleBackColor = true;
-            // 
-            // webBrowser
-            // 
-            this.webBrowser.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.webBrowser.Location = new System.Drawing.Point(3, 3);
-            this.webBrowser.MinimumSize = new System.Drawing.Size(20, 20);
-            this.webBrowser.Name = "webBrowser";
-            this.webBrowser.Size = new System.Drawing.Size(567, 593);
-            this.webBrowser.TabIndex = 0;
-            this.webBrowser.Url = new System.Uri("http://xsd2code.codeplex.com/releases/", System.UriKind.Absolute);
-            // 
             // FormOption
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -193,7 +168,6 @@
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.panel2.ResumeLayout(false);
-            this.tabPage2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -210,8 +184,6 @@
         private System.Windows.Forms.Button btnGenerate;
         private System.Windows.Forms.LinkLabel linkToCodePlex;
         private System.Windows.Forms.CheckBox chkOpenAfterGenerate;
-        private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.WebBrowser webBrowser;
 
 
     }
