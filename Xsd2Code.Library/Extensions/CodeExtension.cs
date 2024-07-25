@@ -1125,7 +1125,7 @@ namespace Xsd2Code.Library.Extensions
             saveToFileMethod.Comments.AddRange(
                 CodeDomHelper.GetSummaryComment(string.Format("Serializes current {0} object into file", type.Name)));
 
-            saveToFileMethod.Comments.Add(CodeDomHelper.GetParamComment("fileName", "full path of outupt xml file"));
+            saveToFileMethod.Comments.Add(CodeDomHelper.GetParamComment("fileName", "full path of output xml file"));
             saveToFileMethod.Comments.Add(CodeDomHelper.GetParamComment("exception", "output Exception value if failed"));
             saveToFileMethod.Comments.Add(CodeDomHelper.GetReturnComment("true if can serialize and save into file; otherwise, false"));
 
